@@ -65,9 +65,9 @@ elseif(BACKEND STREQUAL "dpdk")
 endif()
 
 
-if(CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64")
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(aarch64|arm64)$")
     add_compile_options(-march=armv8-a)
-elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64|i.86")
+elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^(x86_64|AMD64|i.86)$")
     add_compile_options(-march=x86-64 -msse3 -mssse3)
 endif()
 
