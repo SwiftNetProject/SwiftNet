@@ -44,8 +44,11 @@ jobs:
       run: |
         $ErrorActionPreference = "Stop"
 
+        $LlvmUrl = "https://github.com/mstorsjo/llvm-mingw/releases/download/20261020/llvm-mingw-20261020-ucrt-aarch64.zip"
+
         Write-Host "Installing dependencies"
-        choco install llvm cmake make -y --no-progress
+
+        choco install cmake make -y --no-progress
 
         if ($LASTEXITCODE -ne 0) {
           throw "Chocolatey installation failed: $LASTEXITCODE"
@@ -87,6 +90,44 @@ jobs:
         "NPCAP_SDK=$sdkRoot" >> $env:GITHUB_ENV
 
         Write-Host "Npcap SDK installed successfully"
+
+        Write-Host "Downloading LLVM-MinGW ARM64"
+
+        $llvmDownloadLoc = "$env:RUNNER_TEMP\llvm-mingw.zip"
+        $llvmDest = "$env:RUNNER_TEMP\llvm-mingw"
+
+        Invoke-WebRequest `
+          -Uri $LlvmUrl `
+          -OutFile $llvmDownloadLoc
+
+        Write-Host "Extracting LLVM"
+
+        Expand-Archive -Path $llvmDownloadLoc -DestinationPath $llvmDest -Force
+
+        Write-Host "Finding LLVM binaries"
+
+        $clang = Get-ChildItem $llvmDest -Filter clang.exe -Recurse |
+          Select-Object -First 1
+
+        if (!$clang) {
+          throw "LLVM clang.exe not found"
+        }
+
+        $llvmBin = $clang.Directory.FullName
+
+        Write-Host "LLVM bin: $llvmBin"
+
+        "$llvmBin" >> $env:GITHUB_PATH
+
+        Write-Host "Verifying LLVM installation"
+
+        & "$llvmBin\clang.exe" --version
+
+        if ($LASTEXITCODE -ne 0) {
+          throw "LLVM installation verification failed"
+        }
+
+        Write-Host "Windows dependencies installed successfully"
 
     - name: build_integration_tests_pcap
       if: runner.os == 'Linux' || runner.os == 'macOS'
