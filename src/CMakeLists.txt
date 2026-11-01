@@ -65,10 +65,18 @@ elseif(BACKEND STREQUAL "dpdk")
 endif()
 
 
-if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(aarch64|arm64)$")
-    add_compile_options(-march=armv8-a)
-elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^(x86_64|AMD64|i.86)$")
-    add_compile_options(-march=x86-64 -msse3 -mssse3)
+execute_process(
+  COMMAND ${CMAKE_C_COMPILER} -dumpmachine
+  OUTPUT_VARIABLE TARGET_TRIPLE
+  OUTPUT_STRIP_TRAILING_WHITESPACE
+  ERROR_QUIET
+)
+message(STATUS "Compiler target: ${TARGET_TRIPLE}")
+
+if(TARGET_TRIPLE MATCHES "^(aarch64|arm64)")
+  add_compile_options(-march=armv8-a)
+elseif(TARGET_TRIPLE MATCHES "^(x86_64|amd64|i[3-6]86)")
+  add_compile_options(-march=x86-64 -msse3 -mssse3)
 endif()
 
 add_library(swiftnet STATIC ${SOURCE_FILES})
