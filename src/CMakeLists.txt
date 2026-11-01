@@ -71,7 +71,8 @@ execute_process(
   OUTPUT_STRIP_TRAILING_WHITESPACE
   ERROR_QUIET
 )
-messge(STATUS "Compiler target: ${TARGET_TRIPLE}")
+
+message(STATUS "Compiler target: ${TARGET_TRIPLE}")
 
 if(TARGET_TRIPLE MATCHES "^(aarch64|arm64)")
   add_compile_options(-march=armv8-a)
