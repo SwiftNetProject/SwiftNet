@@ -147,7 +147,7 @@ static void on_server_packet(struct SwiftNetServerPacketData* packet, void* cons
         atomic_store_explicit(&g_sent_response, true, memory_order_release);
     } else {
         if (packet->metadata.data_length != sizeof(g_make_request_code)) {
-            PRINT_ERROR("Server received invalid data size: %d | %lu",
+            PRINT_ERROR("Server received invalid data size: %d | %zu",
                 packet->metadata.data_length,
                 sizeof(g_make_request_code)
             );
