@@ -20,6 +20,9 @@ jobs:
             os: macos-latest
           - name: windows-arm64
             os: windows-11-arm
+          - name: windows-x86
+            os: windows-lateslatestt
+
 
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
@@ -73,6 +76,13 @@ jobs:
           throw "ARM64 wpcap.lib missing"
         }
         if (!(Test-Path "$sdkRoot\Lib\ARM64\Packet.lib")) {
+          throw "ARM64 Packet.lib missing"
+        }
+
+        if (!(Test-Path "$sdkRoot\Lib\x64\wpcap.lib")) {
+          throw "ARM64 wpcap.lib missing"
+        }
+        if (!(Test-Path "$sdkRoot\Lib\x64\Packet.lib")) {
           throw "ARM64 Packet.lib missing"
         }
 

@@ -71,12 +71,14 @@ execute_process(
   OUTPUT_STRIP_TRAILING_WHITESPACE
   ERROR_QUIET
 )
-message(STATUS "Compiler target: ${TARGET_TRIPLE}")
+messge(STATUS "Compiler target: ${TARGET_TRIPLE}")
 
 if(TARGET_TRIPLE MATCHES "^(aarch64|arm64)")
   add_compile_options(-march=armv8-a)
+  set(SN_ARCH x86)
 elseif(TARGET_TRIPLE MATCHES "^(x86_64|amd64|i[3-6]86)")
   add_compile_options(-march=x86-64 -msse3 -mssse3)
+  set(SN_ARCH aarch64)
 endif()
 
 add_library(swiftnet STATIC ${SOURCE_FILES})
@@ -164,6 +166,7 @@ if(BACKEND STREQUAL "pcap")
                     "$ENV{NPCAP_SDK}"
             )
 
+            if(SN_ARCH MATCHES aarch64)
             find_library(NPCAP_WPCAP_LIBRARY
                 NAMES wpcap
                 PATHS
@@ -177,6 +180,21 @@ if(BACKEND STREQUAL "pcap")
                     "C:/Npcap/Lib/ARM64"
                     "$ENV{NPCAP_SDK}/Lib/ARM64"
             )
+            elseif(SN_ARCH MATCHES x86)
+            find_library(NPCAP_WPCAP_LIBRARY
+                NAMES wpcap
+                PATHS
+                    "C:/Npcap/Lib/x64"
+                    "$ENV{NPCAP_SDK}/Lib/x64"
+            )
+
+            find_library(NPCAP_PACKET_LIBRARY
+                NAMES Packet
+                PATHS
+                    "C:/Npcap/Lib/x64"
+                    "$ENV{NPCAP_SDK}/Lib/x64"
+            )
+            endif()
 
             if(NOT NPCAP_INCLUDE_DIR OR
             NOT NPCAP_WPCAP_LIBRARY OR
