@@ -76,10 +76,10 @@ message(STATUS "Compiler target: ${TARGET_TRIPLE}")
 
 if(TARGET_TRIPLE MATCHES "^(aarch64|arm64)")
   add_compile_options(-march=armv8-a)
-  set(SN_ARCH x86)
+  set(SN_ARCH aarch64)
 elseif(TARGET_TRIPLE MATCHES "^(x86_64|amd64|i[3-6]86)")
   add_compile_options(-march=x86-64 -msse3 -mssse3)
-  set(SN_ARCH aarch64)
+  set(SN_ARCH x86)
 endif()
 
 add_library(swiftnet STATIC ${SOURCE_FILES})
