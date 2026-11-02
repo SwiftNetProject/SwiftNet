@@ -47,7 +47,11 @@ jobs:
       run: |
         $ErrorActionPreference = "Stop"
 
-        $LlvmUrl = "https://github.com/mstorsjo/llvm-mingw/releases/download/20261020/llvm-mingw-20261020-ucrt-aarch64.zip"
+        if("${{ runner.arch }}" -eq "ARM64") {
+          $LlvmUrl = "https://github.com/mstorsjo/llvm-mingw/releases/download/20261020/llvm-mingw-20261020-ucrt-aarch64.zip"
+        } else {
+          $LlvmUrl = "https://github.com/mstorsjo/llvm-mingw/releases/download/20261020/llvm-mingw-20261020-ucrt-x86_64.zip"
+        }
 
         choco install cmake make -y --no-progress
 
