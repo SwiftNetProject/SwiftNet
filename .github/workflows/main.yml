@@ -21,7 +21,7 @@ jobs:
           - name: windows-arm64
             os: windows-11-arm
           - name: windows-x86
-            os: windows-lateslatestt
+            os: windows-latest
 
 
     name: ${{ matrix.name }}
