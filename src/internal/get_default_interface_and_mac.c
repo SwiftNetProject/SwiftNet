@@ -237,4 +237,3 @@ int get_default_interface_and_mac(
 }
 #endif
 
-// TODO windows version

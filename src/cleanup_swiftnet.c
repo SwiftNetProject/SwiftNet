@@ -88,3 +88,4 @@ void swiftnet_cleanup(void) {
     WSACleanup();
     #endif
 }
+

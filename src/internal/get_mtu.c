@@ -80,3 +80,4 @@ uint16_t get_mtu(const char* restrict const net_interface, const int sockfd) {
     exit(EXIT_FAILURE);
 }
 #endif
+

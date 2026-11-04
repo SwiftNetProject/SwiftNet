@@ -1055,3 +1055,4 @@ void* swiftnet_client_process_packets(void* const void_client) {
 
     return NULL;
 }
+

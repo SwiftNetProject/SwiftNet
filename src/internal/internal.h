@@ -245,7 +245,7 @@ CRC_TARGET MAYBE_UNUSED static uint32_t crc32(const uint8_t* const data, const u
     return ~crc;
 }
 
-static uint16_t ip_checksum(const uint8_t* header) {
+MAYBE_UNUSED static uint16_t ip_checksum(const uint8_t* header) {
     uint32_t sum = 0;
 
     for(uint16_t i = 0; i < 20; i+=2) {

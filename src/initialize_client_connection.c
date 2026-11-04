@@ -166,7 +166,7 @@ struct SwiftNetClientConnection* swiftnet_create_client(const char* const ip_add
         .network_data = &network_data,
         .data = request_server_info_buffer,
         .size = (uint32_t)sizeof(request_server_info_buffer),
-        .server_addr = addr,
+        .server_addr = {addr},
         .timeout_ms = timeout_ms,
         .connection = new_connection
         #ifdef SWIFT_NET_BACKEND_DPDK

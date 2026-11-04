@@ -81,23 +81,62 @@ vcpkg install morcules-swiftnet
 ```
 
 ## From Source
-1. Clone the repository to your local machine:
+
+## Windows
+
+1. Install NPcap (only supported backend on windows right now)
+2. Install NPcap SDK
+3. Put the NPcap SDK location into ENV variable "NPCAP_SDK"
+4. Clone the repository to your local machine:
 ```bash
-git clone https://github.com/morcules/SwiftNet
+git clone https://github.com/SwiftNetProject/SwiftNet
 ```
-2. Navigate to the build directory inside the SwiftNet directory:
+5. Navigate to the build directory inside the SwiftNet directory:
 ```bash
 cd SwiftNet/build
 ```
-3. Copy profile:
+6. Copy profile:
 ```bash
 cp profiles/x_profile.cmake profile.cmake
 ```
-3. Compile:
+7. Compile:
+Run it with admin privileges
+```bash
+sudo ./build.bat
+```
+8. To use SwiftNet in your project:
+- Include `swift_net.h` in your main source file (e.g., `main.c`).
+- Link against the static library `libswiftnet.a` using your compiler.
+
+## Linux/MacOS
+
+1. Install a backend (either libpcap-dev or libdpdk-dev (Only use DPDK with enough experience and in production)
+macOS
+```bash
+brew install libpcap-dev | brew install libdpdk-dev
+```
+linux
+```bash
+apt install libpcap-dev | apt install libdpdk-dev
+```
+
+2. Clone the repository to your local machine:
+```bash
+git clone https://github.com/SwiftNetProject/SwiftNet
+```
+3. Navigate to the build directory inside the SwiftNet directory:
+```bash
+cd SwiftNet/build
+```
+4. Copy profile:
+```bash
+cp profiles/x_profile.cmake profile.cmake
+```
+5. Compile:
 ```bash
 ./build.sh
 ```
-4. To use SwiftNet in your project:
+6. To use SwiftNet in your project:
 - Include `swift_net.h` in your main source file (e.g., `main.c`).
 - Link against the static library `libswiftnet.a` using your compiler.
 
