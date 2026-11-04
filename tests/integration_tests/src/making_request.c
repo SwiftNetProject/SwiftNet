@@ -147,7 +147,7 @@ static void on_server_packet(struct SwiftNetServerPacketData* packet, void* cons
         atomic_store_explicit(&g_sent_response, true, memory_order_release);
     } else {
         if (packet->metadata.data_length != sizeof(g_make_request_code)) {
-            PRINT_ERROR("Server received invalid data size: %d | %lu",
+            PRINT_ERROR("Server received invalid data size: %d | %zu",
                 packet->metadata.data_length,
                 sizeof(g_make_request_code)
             );
@@ -284,7 +284,7 @@ int test_making_request(const union Args* args_ptr) {
     atomic_store_explicit(&g_request_data_len, args.request_data_len, memory_order_release);
     atomic_store_explicit(&g_response_data_len, args.response_data_len, memory_order_release);
 
-    if (args.receiver == Server) {
+    if (args.receiver == CONNECTION_TYPE_SERVER) {
         struct SwiftNetPacketBuffer buffer = swiftnet_client_create_packet_buffer(args.request_data_len, client_conn);
 
         swiftnet_append_to_buffer(req_data, args.request_data_len, &buffer);

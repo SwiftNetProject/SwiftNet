@@ -18,6 +18,11 @@ jobs:
             os: ubuntu-24.04-arm
           - name: macos-arm64
             os: macos-latest
+          - name: windows-arm64
+            os: windows-11-arm
+          - name: windows-x86
+            os: windows-latest
+
 
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
@@ -25,11 +30,6 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-
-    - name: show_arch
-      run: |
-        uname -m
-        cc -dumpmachine
 
     - name: install_dependencies_linux
       if: runner.os == 'Linux'
@@ -41,15 +41,100 @@ jobs:
       if: runner.os == 'macOS'
       run: brew install cmake
 
+    - name: install_dependencies_windows
+      if: runner.os == 'Windows'
+      shell: pwsh
+      run: |
+        $ErrorActionPreference = "Stop"
+
+        if("${{ runner.arch }}" -eq "ARM64") {
+          $LlvmUrl = "https://github.com/mstorsjo/llvm-mingw/releases/download/20261020/llvm-mingw-20261020-ucrt-aarch64.zip"
+        } else {
+          $LlvmUrl = "https://github.com/mstorsjo/llvm-mingw/releases/download/20261020/llvm-mingw-20261020-ucrt-x86_64.zip"
+        }
+
+        choco install cmake make -y --no-progress
+
+        if ($LASTEXITCODE -ne 0) {
+          throw "Chocolatey installation failed: $LASTEXITCODE"
+        }
+
+        $sdk = "$env:RUNNER_TEMP\npcap-sdk.zip"
+        $dest = "$env:RUNNER_TEMP\npcap-sdk"
+
+        Invoke-WebRequest `
+          -Uri "https://npcap.com/dist/npcap-sdk-1.17.zip" `
+          -OutFile $sdk
+
+        Expand-Archive -Path $sdk -DestinationPath $dest -Force
+
+        $header = Get-ChildItem $dest -Filter pcap.h -Recurse | Select-Object -First 1
+
+        if (!$header) {
+          throw "Npcap SDK headers not found"
+        }
+
+        $sdkRoot = $header.Directory.Parent.FullName
+
+        if (!(Test-Path "$sdkRoot\Lib\ARM64\wpcap.lib")) {
+          throw "ARM64 wpcap.lib missing"
+        }
+        if (!(Test-Path "$sdkRoot\Lib\ARM64\Packet.lib")) {
+          throw "ARM64 Packet.lib missing"
+        }
+
+        if (!(Test-Path "$sdkRoot\Lib\x64\wpcap.lib")) {
+          throw "ARM64 wpcap.lib missing"
+        }
+        if (!(Test-Path "$sdkRoot\Lib\x64\Packet.lib")) {
+          throw "ARM64 Packet.lib missing"
+        }
+
+        "NPCAP_SDK=$sdkRoot" >> $env:GITHUB_ENV
+
+        $llvmDownloadLoc = "$env:RUNNER_TEMP\llvm-mingw.zip"
+        $llvmDest = "$env:RUNNER_TEMP\llvm-mingw"
+
+        Invoke-WebRequest `
+          -Uri $LlvmUrl `
+          -OutFile $llvmDownloadLoc
+
+        Expand-Archive -Path $llvmDownloadLoc -DestinationPath $llvmDest -Force
+
+        $clang = Get-ChildItem $llvmDest -Filter clang.exe -Recurse |
+          Select-Object -First 1
+
+        if (!$clang) {
+          throw "LLVM clang.exe not found"
+        }
+
+        $llvmBin = $clang.Directory.FullName
+
+        "$llvmBin" >> $env:GITHUB_PATH
+
+        & "$llvmBin\clang.exe" --version
+
+        if ($LASTEXITCODE -ne 0) {
+          throw "LLVM installation verification failed"
+        }
+
     - name: build_integration_tests_pcap
+      if: runner.os == 'Linux' || runner.os == 'macOS'
       run: |
         ./build_pcap_tests.sh
       working-directory: tests/integration_tests/build
 
     - name: run_integration_tests_pcap
+      if: runner.os == 'Linux' || runner.os == 'macOS'
       run: |
         sudo ./run_tests
       working-directory: tests/integration_tests/output
+
+    - name: build_integration_tests_pcap_win
+      if: runner.os == 'Windows'
+      run: |
+        ./build_pcap_tests.bat
+      working-directory: tests/integration_tests/build
 
     - name: enable_hugepages
       if: runner.os == 'Linux'

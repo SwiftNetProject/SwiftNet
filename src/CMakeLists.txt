@@ -65,10 +65,21 @@ elseif(BACKEND STREQUAL "dpdk")
 endif()
 
 
-if(CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64")
-    add_compile_options(-march=armv8-a)
-elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64|i.86")
-    add_compile_options(-march=x86-64 -msse3 -mssse3)
+execute_process(
+  COMMAND ${CMAKE_C_COMPILER} -dumpmachine
+  OUTPUT_VARIABLE TARGET_TRIPLE
+  OUTPUT_STRIP_TRAILING_WHITESPACE
+  ERROR_QUIET
+)
+
+message(STATUS "Compiler target: ${TARGET_TRIPLE}")
+
+if(TARGET_TRIPLE MATCHES "^(aarch64|arm64)")
+  add_compile_options(-march=armv8-a)
+  set(SN_ARCH aarch64)
+elseif(TARGET_TRIPLE MATCHES "^(x86_64|amd64|i[3-6]86)")
+  add_compile_options(-march=x86-64 -msse3 -mssse3)
+  set(SN_ARCH x86)
 endif()
 
 add_library(swiftnet STATIC ${SOURCE_FILES})
@@ -147,10 +158,74 @@ if(BACKEND STREQUAL "pcap")
             message(WARNING "libpcap not found!!!")
         endif()
     else()
-        target_link_options(swiftnet PRIVATE -lpcap)
-        target_link_options(swiftnet_shared PRIVATE -lpcap)
+        if(WIN32)
+            find_path(NPCAP_INCLUDE_DIR
+                NAMES pcap.h
+                PATH_SUFFIXES Include include
+                PATHS
+                    "C:/Npcap"
+                    "$ENV{NPCAP_SDK}"
+            )
 
-        message("using linking option: -lpcap")
+            if(SN_ARCH MATCHES aarch64)
+            find_library(NPCAP_WPCAP_LIBRARY
+                NAMES wpcap
+                PATHS
+                    "C:/Npcap/Lib/ARM64"
+                    "$ENV{NPCAP_SDK}/Lib/ARM64"
+            )
+
+            find_library(NPCAP_PACKET_LIBRARY
+                NAMES Packet
+                PATHS
+                    "C:/Npcap/Lib/ARM64"
+                    "$ENV{NPCAP_SDK}/Lib/ARM64"
+            )
+            elseif(SN_ARCH MATCHES x86)
+            find_library(NPCAP_WPCAP_LIBRARY
+                NAMES wpcap
+                PATHS
+                    "C:/Npcap/Lib/x64"
+                    "$ENV{NPCAP_SDK}/Lib/x64"
+            )
+
+            find_library(NPCAP_PACKET_LIBRARY
+                NAMES Packet
+                PATHS
+                    "C:/Npcap/Lib/x64"
+                    "$ENV{NPCAP_SDK}/Lib/x64"
+            )
+            endif()
+
+            if(NOT NPCAP_INCLUDE_DIR OR
+            NOT NPCAP_WPCAP_LIBRARY OR
+            NOT NPCAP_PACKET_LIBRARY)
+                message(FATAL_ERROR "Npcap SDK not found")
+            endif()
+
+            target_include_directories(swiftnet PRIVATE
+                "${NPCAP_INCLUDE_DIR}"
+            )
+
+            target_link_libraries(swiftnet PRIVATE
+                "${NPCAP_WPCAP_LIBRARY}"
+                "${NPCAP_PACKET_LIBRARY}"
+            )
+
+            target_include_directories(swiftnet_shared PRIVATE
+                "${NPCAP_INCLUDE_DIR}"
+            )
+
+            target_link_libraries(swiftnet_shared PRIVATE
+                "${NPCAP_WPCAP_LIBRARY}"
+                "${NPCAP_PACKET_LIBRARY}"
+            )
+        else()
+            target_link_options(swiftnet PRIVATE -lpcap)
+            target_link_options(swiftnet_shared PRIVATE -lpcap)
+
+            message("using linking option: -lpcap")
+        endif()
     endif()
 elseif(BACKEND STREQUAL "dpdk")
     find_package(PkgConfig REQUIRED)
@@ -170,6 +245,20 @@ elseif(BACKEND STREQUAL "dpdk")
     target_link_libraries(swiftnet PUBLIC -static ${DPDK_LIBRARIES})
     target_link_libraries(swiftnet_shared PUBLIC ${DPDK_LIBRARIES})
     message(STATUS "DPDK backend selected")
+endif()
+
+if(WIN32)
+    target_link_libraries(swiftnet PRIVATE
+        ws2_32
+        iphlpapi
+        pthread
+    )
+
+    target_link_libraries(swiftnet_shared PRIVATE
+        ws2_32
+        iphlpapi
+        pthread
+    )
 endif()
 
 set_target_properties(swiftnet PROPERTIES
