@@ -20,7 +20,9 @@
 
 ## Supported Platforms
 - **Apple Silicon (macOS arm64)**
-- **Linux arm64** (Release build works, but testing is disabled due to TSAN issues)
+- **Windows 11 (aarch64)**
+- **Windows 11 (x86-64)**
+- **Linux aarch64** (Release build works, but testing is disabled due to TSAN issues)
 - **Linux x86-64**
 
 ## Features
