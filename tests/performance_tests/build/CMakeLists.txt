@@ -21,9 +21,26 @@ endif()
 
 link_directories(${CMAKE_SOURCE_DIR}/../../../build/output)
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -O0")
 
 file(GLOB SRC_FILES "${CMAKE_SOURCE_DIR}/../src/*.c")
+
+execute_process(
+  COMMAND ${CMAKE_C_COMPILER} -dumpmachine
+  OUTPUT_VARIABLE TARGET_TRIPLE
+  OUTPUT_STRIP_TRAILING_WHITESPACE
+  ERROR_QUIET
+)
+
+message(STATUS "Compiler target: ${TARGET_TRIPLE}")
+
+if(TARGET_TRIPLE MATCHES "^(aarch64|arm64)")
+  add_compile_options(-march=armv8-a)
+  set(SN_ARCH aarch64)
+elseif(TARGET_TRIPLE MATCHES "^(x86_64|amd64|i[3-6]86)")
+  add_compile_options(-march=x86-64 -msse3 -mssse3)
+  set(SN_ARCH x86)
+endif()
 
 add_executable(run_tests ${SRC_FILES})
 
@@ -36,21 +53,39 @@ if(BACKEND STREQUAL "pcap")
             PATH_SUFFIXES Include include
             PATHS
                 "C:/Npcap"
+                "$ENV{NPCAP_SDK}"
         )
 
+        if(SN_ARCH MATCHES aarch64)
         find_library(NPCAP_WPCAP_LIBRARY
             NAMES wpcap
             PATHS
                 "C:/Npcap/Lib/ARM64"
-                "C:/Npcap/Lib"
+                "$ENV{NPCAP_SDK}/Lib/ARM64"
         )
 
         find_library(NPCAP_PACKET_LIBRARY
             NAMES Packet
             PATHS
                 "C:/Npcap/Lib/ARM64"
-                "C:/Npcap/Lib"
+                "$ENV{NPCAP_SDK}/Lib/ARM64"
         )
+        elseif(SN_ARCH MATCHES x86)
+        find_library(NPCAP_WPCAP_LIBRARY
+            NAMES wpcap
+            PATHS
+                "C:/Npcap/Lib/x64"
+                "$ENV{NPCAP_SDK}/Lib/x64"
+        )
+
+        find_library(NPCAP_PACKET_LIBRARY
+            NAMES Packet
+            PATHS
+                "C:/Npcap/Lib/x64"
+                "$ENV{NPCAP_SDK}/Lib/x64"
+        )
+        endif()
+
 
         if(NOT NPCAP_INCLUDE_DIR OR
         NOT NPCAP_WPCAP_LIBRARY OR
